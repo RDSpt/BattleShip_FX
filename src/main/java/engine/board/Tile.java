@@ -9,16 +9,18 @@ import java.util.*;
 public abstract class Tile {
 	
 	// ===== Variables ===== //
-	private static final Table<Integer,Integer,EmptyTile> EMPTY_TILE_CACHE = createAllPossibleEmptyTiles();
+	public static final Map<Map.Entry<Integer, Integer>, EmptyTile> EMPTY_TILE_CACHE = createAllPossibleEmptyTiles();
 	protected int row;
 	protected int col;
 	protected int[] tileCoordinate;
+	protected boolean shootted;
 	// ===== Constructor ===== //
 	
-	public Tile(final int row, final int col) {
+	public Tile(final int row, final int col, final boolean shootted) {
 		
 		this.row = row;
 		this.col = col;
+		this.shootted = shootted;
 		setTileCoordinate(row, col);
 	}
 	
@@ -33,32 +35,41 @@ public abstract class Tile {
 	}
 	
 	// ===== Methods ===== //
-	private static Table<Integer,Integer,EmptyTile> createAllPossibleEmptyTiles() {
+	private static Map<Map.Entry<Integer, Integer>, EmptyTile> createAllPossibleEmptyTiles() {
 		
-		final Table<Integer,Integer,EmptyTile> emptyTileList = null;
+		final Map<Map.Entry<Integer, Integer>, EmptyTile> emptyTileList = new HashMap<>();
 		for (int row = 0; row < engine.board.BoardUtils.TILES_PER_ROW; row++) {
 			for (int col = 0; col < engine.board.BoardUtils.TILES_PER_COL; col++) {
-				emptyTileList.put(row,col,new EmptyTile(row, col));
+				Map.Entry<Integer, Integer> coordinate = new AbstractMap.SimpleEntry(row, col);
+				emptyTileList.put(coordinate, new EmptyTile(row, col));
 			}
 		}
-		return ImmutableTable.copyOf(emptyTileList);
+		return ImmutableMap.copyOf(emptyTileList);
 	}
 	
 	public static Tile createTile(final int row, final int col, final Ship ship) {
 		
-		return ship != null ? new OccupiedTile(row, col, ship) : EMPTY_TILE_CACHE.get(row, col);
+		Map.Entry<Integer, Integer> coordinate = new AbstractMap.SimpleEntry(row, col);
+		return ship != null ? new OccupiedTile(row, col, ship) : EMPTY_TILE_CACHE.get(coordinate);
 	}
 	
 	public abstract boolean isTileOccupied();
 	
 	public abstract Ship getShip();
+	
+	public boolean isShootted() {
+		
+		return shootted;
+	}
+	
+	public abstract boolean missed();
 	// ===== EmptyTile CLASS ===== //
 	
 	private static class EmptyTile extends Tile {
 		
 		public EmptyTile(final int row, final int col) {
 			
-			super(row, col);
+			super(row, col, false);
 			
 		}
 		
@@ -71,6 +82,18 @@ public abstract class Tile {
 			
 			return null;
 		}
+		
+		@Override
+		public boolean missed() {
+			
+			return true;
+		}
+		
+		@Override
+		public String toString() {
+			
+			return "~";
+		}
 	}
 	// ===== OccupiedTile CLASS ===== //
 	
@@ -80,18 +103,30 @@ public abstract class Tile {
 		
 		public OccupiedTile(final int row, final int col, final Ship ship) {
 			
-			super(row, col);
+			super(row, col, false);
 			this.shipOnTile = ship;
 		}
 		
 		public boolean isTileOccupied() {
 			
-			return false;
+			return true;
 		}
 		
 		public Ship getShip() {
 			
 			return shipOnTile;
+		}
+		
+		@Override
+		public boolean missed() {
+			
+			return false;
+		}
+		
+		@Override
+		public String toString() {
+			
+			return getShip().toString();
 		}
 	}
 	
