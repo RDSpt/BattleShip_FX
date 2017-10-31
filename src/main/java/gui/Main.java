@@ -7,6 +7,8 @@ import javafx.scene.*;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
 
 public class Main extends Application {
 	
@@ -15,7 +17,20 @@ public class Main extends Application {
 		Board board = Board.createStandardBoard();
 		System.out.println(board.toString());
 		launch(args);
+		
+		/*String variableName = Board.class.getSimpleName().toLowerCase();
+		String name         = variableName + 1;
+		//Board.class.getField(name) = "banana";
+		ArrayList<String> a = new ArrayList<String>();
+		for(Field field: Board.class.getFields()){
+			System.out.println(field.get(Object));
+			//field =  "banana";
+		}
+		//name = props.gerParameter(name)
+		System.out.println(name);*/
 	}
+	
+
 	
 	@Override
 	public void start(Stage primaryStage) throws IOException {

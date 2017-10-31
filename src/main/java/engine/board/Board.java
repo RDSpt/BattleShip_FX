@@ -9,7 +9,7 @@ import java.util.*;
 import static engine.board.BoardUtils.*;
 
 public class Board {
-	
+	public String board1       = "dfdsf";
 	private static Map<Map.Entry<Integer, Integer>, Tile> allyBoard;
 	private static Map<Map.Entry<Integer, Integer>, Tile> naziBoard;
 	private final Collection<Ship> alliesShips;
@@ -62,12 +62,12 @@ public class Board {
 		naziBoard = createEmptyBoard(builder);
 		//Set Nazi Random location Ships
 		boolean v1 = new Random().nextBoolean();
-		builder.setNaziShip(Carrier.getInstance(generateRandomPosition(Ship.ShipType.CARRIER, v1), Alliance.NAZI, v1));
+		/*builder.setNaziShip(Carrier.getInstance(generateRandomPosition(Ship.ShipType.CARRIER, v1), Alliance.NAZI, v1));*/
 		v1 = new Random().nextBoolean();
-		builder.setNaziShip(Battleship.getInstance(generateRandomPosition(Ship.ShipType.BATTLESHIP, v1), Alliance.NAZI, v1
-		));
+		/*builder.setNaziShip(Battleship.getInstance(generateRandomPosition(Ship.ShipType.BATTLESHIP, v1), Alliance.NAZI, v1
+		));*/
 		v1 = new Random().nextBoolean();
-		builder.setNaziShip(Cruise.getInstance(generateRandomPosition(Ship.ShipType.CRUISE, v1),Alliance.NAZI, v1));
+		builder.setNaziShip(Cruise.getInstance(generateRandomPosition(Ship.ShipType.CRUISE, v1), Alliance.NAZI, v1));
 		v1 = new Random().nextBoolean();
 		builder.setNaziShip(Submarine.getInstance(generateRandomPosition(Ship.ShipType.SUBMARINE, v1), Alliance.NAZI,
 				v1));

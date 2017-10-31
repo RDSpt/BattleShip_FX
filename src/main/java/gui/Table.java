@@ -1,6 +1,7 @@
 package gui;
 
 import engine.board.*;
+import engine.ships.Ship;
 import javafx.application.Platform;
 import javafx.event.EventType;
 import javafx.geometry.*;
@@ -98,8 +99,12 @@ public class Table {
 			int tileNum = 0;
 			for (int r = 0; r < BoardUtils.TILES_PER_COL; r++) {
 				for (int c = 0; c < BoardUtils.TILES_PER_ROW; c++) {
-					tilePanel = new TilePanel(this, tileNum, r + 1, c + 1);
+					tilePanel = new TilePanel(tileNum, r, c);
 					tilePanel.addMouseListener(board);
+					if (board == naziBoard) {
+						tilePanel.assignTilePieceIcon(board);
+						tilePanel.assignFogOfWar();
+					}
 					grid.setAlignment(Pos.CENTER);
 					grid.add(tilePanel, c, r);
 					this.boardTiles.add(tilePanel);
@@ -135,20 +140,18 @@ public class Table {
 		private final int tileId;
 		private final Map.Entry<Integer, Integer> coordinate;
 		
-		TilePanel(final BoardPanel boardPanel,
-		          final int tileId, final int row, final int col) {
+		TilePanel(final int tileId, final int row, final int col) {
 			
 			this.tileId = tileId;
 			this.coordinate = BoardUtils.coordinate(row, col);
 			setMinSize(60, 60);
 			assignTileColor();
 			//addMouseListener();
-			
 			/*assignTilePieceIcon(allyBoard);
-			assignTilePieceIcon(naziBoard);*/
+			*/
 		}
 		
-		public void addMouseListener(Map<Map.Entry<Integer, Integer>, Tile> board) {
+		private void addMouseListener(Map<Map.Entry<Integer, Integer>, Tile> board) {
 			
 			setOnMouseEntered(event -> {
 				if (board.get(this.coordinate) != null && board == naziBoard)
@@ -168,7 +171,12 @@ public class Table {
 					System.out.println("Left Click " + this.coordinate);
 					System.out.println("X " + event.getX());
 					System.out.println("Y " + event.getY());
-				
+					if (!this.getChildren().isEmpty()) {
+						StackPane stack = (StackPane) this.getChildren().get(0);
+						if (stack.getChildren().get(1) instanceof ImageView) {
+							stack.getChildren().remove(01);
+						}
+					}
 				}
 				else if (isRightMouseButton(event)) {
 					//reset click
@@ -176,76 +184,43 @@ public class Table {
 					/*sourceTile = null;
 					destinationTile = null;
 					humanMovedPiece = null;*/
-					
-					//leftMouse
-					/*if (sourceTile == null) { //not clicked yet
-						sourceTile = checkersBoard.getTile(tileId);//select Tile
-						humanMovedPiece = sourceTile.getPiece();//get piece on tile
-						if (humanMovedPiece == null) {//no piece selected
-							sourceTile = null;//reset
-						}
-					}
-					else { //piece selected
-						destinationTile = checkersBoard.getTile(tileId); //select destination
-						final Move move = MoveFactory.createMove(checkersBoard, sourceTile.getTileCoordinate(),
-								destinationTile.getTileCoordinate());
-						final MoveTransition transition = checkersBoard.currentPlayer().makeMove(move);
-						if (transition.getMoveStatus().isDone()) {
-							checkersBoard = transition.getTransitionBoard();
-							moveLog.addMove(move);
-						}
-						sourceTile = null;
-						destinationTile = null;
-						humanMovedPiece = null;
-					}
-					*/
 				}
-				/*Platform.runLater(() -> {
-					if (checkersBoard.getBlackPieces().size() != 0 || checkersBoard.getWhitePieces().size() != 0) {
-						takenPiecesPanel.redo(moveLog);
-						if (gameSetup.isAIPlayer(checkersBoard.currentPlayer())) {
-							Table.get().moveMadeUpdate(PlayerType.HUMAN);
-						}
-						allyPanel.drawBoard(checkersBoard);
-					}
-					else {
-						String winner = checkersBoard.getBlackPieces().size() == 0 ? "White Player" : "Black Player";
-						Alert  alert  = new Alert(Alert.AlertType.NONE);
-						alert.setContentText(winner + " just won the game!");
-						alert.show();
-					}
-				});*/
 			});
 		}
 		
 		private boolean isRightMouseButton(MouseEvent event) {
 			
-			if (event.getButton() == MouseButton.SECONDARY)
-				return true;
-			else
-				return false;
+			return event.getButton() == MouseButton.SECONDARY;
 		}
 		
 		private boolean isLeftMouseButton(MouseEvent event) {
 			
-			if (event.getButton() == MouseButton.PRIMARY)
-				return true;
-			else
-				return false;
+			return event.getButton() == MouseButton.PRIMARY;
 		}
 		
 		private void assignTilePieceIcon(final Map<Map.Entry<Integer, Integer>, Tile> board) {
 			
+			String path;
 			this.getChildren().removeAll();
 			Tile tile = board.get(this.coordinate);
-			if (board.get(this.coordinate).isTileOccupied()) {
-				final Image image = new Image("/Graphics/" +
-						tile.getShip().getShipAlliance().toString().substring(0, 1) +
-						tile.getShip().toString() + ".png", 50, 50, true, true);
-				final ImageView imageView = new ImageView(image);
-				setAlignment(Pos.CENTER);
-				this.getChildren().add(imageView);
-			}
+			if (tile != null)
+				if (board.get(this.coordinate).isTileOccupied()) {
+					if (tile.getShip().getVertical()) {
+						path = "/boats/vertical/";
+					}
+					else {
+						path = "/boats/horizontal/";
+					}
+					int row    = this.coordinate.getKey();
+					int col    = this.coordinate.getValue();
+					int number = getBoatPartNumber(row, col, tile.getShip().getShipType(), board);
+					final Image image = new Image(path +
+							tile.getShip().getShipAlliance().toString().substring(0, 1) +
+							tile.getShip().toString() + number + ".png", 60, 60, true, true);
+					final ImageView imageView = new ImageView(image);
+					setAlignment(Pos.CENTER);
+					this.getChildren().add(new StackPane(imageView));
+				}
 			
 		}
 		
@@ -260,10 +235,36 @@ public class Table {
 			
 		}
 		
-		public void drawTile(final Board board) {
+		public void assignFogOfWar() {
 			
-			assignTileColor();
-			//assignTilePieceIcon(board);
+			ImageView image = new ImageView(new Image("/FOG.jpg", 60, 60, false,
+					true));
+			if (!this.getChildren().isEmpty()) {
+				StackPane stack = (StackPane) this.getChildren().get(0);
+				stack.getChildren().add(image);
+			}
+			else {
+				this.getChildren().add(new StackPane(image));
+			}
+		}
+		
+		private int getBoatPartNumber(final int row, final int col, final Ship.ShipType ship, final Map<Map
+				.Entry<Integer, Integer>, Tile> board) {
+			
+			int boatPartNumber = 1;
+			for (int i = 1; i < ship.getShipSize(); i++) {
+				Map.Entry<Integer, Integer> nextVerticalTileCoordinate   = BoardUtils.coordinate(row + i, col);
+				Map.Entry<Integer, Integer> nextHorizontalTileCoordinate = BoardUtils.coordinate(row, col + i);
+				if (board.get(nextVerticalTileCoordinate) != null) {
+					if (board.get(this.coordinate).getShip() == board.get(nextVerticalTileCoordinate).getShip())
+						boatPartNumber++;
+				}
+				if (board.get(nextHorizontalTileCoordinate) != null) {
+					if (board.get(this.coordinate).getShip() == board.get(nextHorizontalTileCoordinate).getShip())
+						boatPartNumber++;
+				}
+			}
+			return boatPartNumber;
 		}
 	}
 	
